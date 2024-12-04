@@ -1,6 +1,6 @@
-// firebase.js
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getDatabase } from 'firebase/database'; // Import Realtime Database
 
 const firebaseConfig = {
   apiKey: "AIzaSyA6FTeusQo-DoinnxjhfXpNqVKGlAvsw9M",
@@ -9,13 +9,14 @@ const firebaseConfig = {
   projectId: "try-led-9d876",
   storageBucket: "try-led-9d876.appspot.com",
   messagingSenderId: "824598666827",
-  appId: "1:824598666827:web:5fc6a09d039fc6857077ce"
+  appId: "1:824598666827:web:5fc6a09d039fc6857077ce",
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Export individual Firebase services
+// Export Firebase services
 export const auth = getAuth(app);
+export const db = getDatabase(app); // Correctly initialize Realtime Database
 
 export default app;

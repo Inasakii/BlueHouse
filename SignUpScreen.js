@@ -18,8 +18,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from './firebase';  // Importing the Firebase auth module
 import { createUserWithEmailAndPassword } from 'firebase/auth'; // Firebase signup method
+
+import { auth } from './firebase'; 
+import { ref, set } from 'firebase/database'; // Realtime Database functions
+import { db } from './firebase'; // Import the corrected Realtime Database instance
 
 const { width, height } = Dimensions.get('window');
 
@@ -86,6 +89,8 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fname, setFname] = useState(''); 
+  const [lname, setLname] = useState(''); 
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState('');
@@ -131,6 +136,12 @@ export default function SignUpScreen() {
   };
 
   const handleSignUp = async () => {
+    if (!fname || !lname) {
+      showModal('error', 'Please enter your first and last name');
+      shakeInput();
+      return;
+    }
+  
     if (email.trim() === '' || password.trim() === '' || confirmPassword.trim() === '') {
       showModal('error', 'Please fill in all fields');
       shakeInput();
@@ -151,10 +162,20 @@ export default function SignUpScreen() {
       shakeInput();
       return;
     }
-
+  
     try {
-      // Firebase sign-up
-      await createUserWithEmailAndPassword(auth, email, password);
+      // Firebase Auth sign-up
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+  
+      // Save user details to Firebase Realtime Database
+      await set(ref(db, `users/${user.uid}`), {
+        fname: fname,
+        lname: lname,
+        email: user.email,
+        createdAt: new Date().toISOString(),
+      });
+  
       showModal('success', 'Sign up successful!');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
@@ -162,7 +183,7 @@ export default function SignUpScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
-
+  
   const showModal = (type, message) => {
     setModalType(type);
     setModalMessage(message);
@@ -202,7 +223,33 @@ export default function SignUpScreen() {
             )}
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Sign up to get started</Text>
+          
+
             <Animated.View style={[styles.inputContainer, { transform: [{ translateX: shakeAnim }] }]}>
+            <View style={styles.nameInputContainer}>
+              <View style={[styles.inputWrapper, styles.firstNameInput]}>
+                  <TextInput
+                      style={styles.input}
+                      placeholder="First name"
+                      placeholderTextColor="#A0A0A0"
+                      value={fname} // Bind fname state
+                      onChangeText={setFname} // Update fname state
+                      keyboardType="default"
+                      autoCapitalize="words"
+                    />
+                  </View>
+                  <View style={[styles.inputWrapper, styles.lastNameInput]}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Last name"
+                      placeholderTextColor="#A0A0A0"
+                      value={lname} // Bind lname state
+                      onChangeText={setLname} // Update lname state
+                      keyboardType="default"
+                      autoCapitalize="words"
+                    />
+                  </View>
+                </View>
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
                 <TextInput
@@ -335,6 +382,18 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
   },
+  nameInputContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  firstNameInput: {
+    flex: 1,
+    marginRight: 10, // Space between first name and last name
+  },
+  lastNameInput: {
+    flex: 1,
+  },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,7 +408,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#FFFFFF',
     paddingVertical: 15,
-    paddingRight: 10,
+    paddingRight: 15,
     fontSize: 16,
   },
   eyeIcon: {
@@ -402,7 +461,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginLink: {
-    color: '#FFFFFF',
+    color: '#002f6d',
     fontSize: 16,
     fontWeight: 'bold',
   },

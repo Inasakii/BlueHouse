@@ -5,7 +5,7 @@ import AppNavigator from './AppNavigator';
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppNavigator />
+      <AppNavigator/>
     </SafeAreaProvider>
   );
 }

@@ -355,6 +355,8 @@ const TabContent = ({ title }) => {
         );
       case 'About Us':
         return <AboutUsSection />;
+
+        
       case 'Profile':
         return (
           <View style={styles.placeholderContent}>
