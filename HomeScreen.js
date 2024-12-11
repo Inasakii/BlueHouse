@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity, ScrollView, Switch, PanResponder, Image} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -394,10 +394,10 @@ const SecurityControlsSection = () => {
 const AboutUsSection = () => {
   const teamMembers = [
     { name: 'John Mark Capones', title: 'Project Manager', image: 'https://i.pravatar.cc/150?img=1' },
-    { name: 'Mark Zafra', title: 'Back-end Administrator', image: '' },
-    { name: 'Leigh Xienne Gegrimos', title: 'Assurance Specialist for Quality & Security', image: 'https://i.pravatar.cc/150?img=3' },
+    { name: 'Mark Rivinson Zafra', title: 'Back-end Administrator', image: '' },
+    { name: 'Leigh Xienne Gegrimos', title: 'Assurance Specialist for Quality & Security', image: 'https://scontent.fmnl17-5.fna.fbcdn.net/v/t39.30808-6/447674332_122189216324010069_8274525488206710261_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=D9cyEVbbLaUQ7kNvgGj8-n9&_nc_zt=23&_nc_ht=scontent.fmnl17-5.fna&_nc_gid=A4kQ4hsnvOS0fTlLFuszBlt&oh=00_AYAUJMXR5VKXmnccYbLB_cMPi021m_253Pq9ycPuYnk10w&oe=675FB895' },
     { name: 'Joya Acel, J', title: 'Assurance Specialist for Quality & Security', image: 'https://i.pravatar.cc/150?img=3' },
-    { name: 'Ken L. Palma', title: 'Back-end Developer & Front-end Developer', image: '' },
+    { name: 'Ken L. Palma', title: 'Back-end Developer & Front-end Developer', image: 'https://scontent.fmnl17-2.fna.fbcdn.net/v/t39.30808-6/462101976_3682236668755453_6560725037198512052_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=JuIAqbvKyeMQ7kNvgErNgOI&_nc_zt=23&_nc_ht=scontent.fmnl17-2.fna&_nc_gid=ANQIbts3yb09Rce0MAWAQqV&oh=00_AYBaUABCt50D8gMTPIp1xo1j58N_wick82Z1ybR_lvuw0w&oe=675FC39A' },
     { name: 'John Anthony Salipot, J', title: 'Release Manager', image: '' },
     { name: 'John Paul Sauco', title: 'User Insights Specialist', image: '' },
 
@@ -468,6 +468,9 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [userName, setUserName] = useState(''); // Default empty state for userName
   const navigation = useNavigation();
+  const [showNotification, setShowNotification] = useState(true);
+  const notificationHeight = useRef(new Animated.Value(0)).current;
+  const notificationOpacity = useRef(new Animated.Value(1)).current;
 
   // Fetch `fname` from Realtime Database
   useEffect(() => {
@@ -488,6 +491,44 @@ export default function HomeScreen() {
     fetchUserName();
   }, []);  
 
+  useEffect(() => {
+    if (showNotification) {
+      Animated.parallel([
+        Animated.timing(notificationHeight, {
+          toValue: 60,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+        Animated.timing(notificationOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false,
+        }),
+      ]).start();
+
+      const timer = setTimeout(() => {
+      hideNotification();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showNotification]);
+
+  const hideNotification = useCallback(() => {
+    Animated.parallel([
+      Animated.timing(notificationHeight, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(notificationOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+    ]).start(() => setShowNotification(false));
+  }, []);
+
   const tabData = [
     { icon: 'home-outline', label: 'Dashboard' },
     { icon: 'people-outline', label: 'About Us' },
@@ -505,7 +546,15 @@ export default function HomeScreen() {
         colors={['#002f6d', '#001a3d']}
         style={styles.background}
       >
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, { marginTop: notificationHeight }]}>
+          {showNotification && (
+            <Animated.View style={[styles.notification, { height: notificationHeight, opacity: notificationOpacity }]}>
+              <Text style={styles.notificationText}>New notification!</Text>
+              <TouchableOpacity onPress={hideNotification} style={styles.notificationCloseButton}>
+                <Ionicons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </Animated.View>
+          )}
           <View>
             <Text style={styles.welcomeMessage}>
               {userName ? `Welcome, ${userName}!` : 'Welcome Back!'}
@@ -515,7 +564,7 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.logoutButton}>
             <Ionicons name="log-out-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
+        </Animated.View>
         <TabContent title={activeTab} />
         <View style={styles.tabBar}>
           {tabData.map((tab) => (
@@ -807,6 +856,25 @@ const styles = StyleSheet.create({
   teamMemberTitle: {
     fontSize: 14,
     color: '#A0A0A0',
+  },
+  notification: {
+    position: 'absolute',
+    top: -60,
+    left: 0,
+    right: 0,
+    backgroundColor: '#4a90e2',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  notificationText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 600, 
+  },
+  notificationCloseButton: {
+    padding: 5,
   },
 });
 
