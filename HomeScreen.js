@@ -464,11 +464,29 @@ const TabContent = ({ title }) => {
   );
 };
 
- export default function HomeScreen() {
+export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [userName, setUserName] = useState(''); // Default empty state for userName
   const navigation = useNavigation();
 
-  const userName = "John";
+  // Fetch `fname` from Realtime Database
+  useEffect(() => {
+    const fetchUserName = async () => {
+      const userRef = ref(db, 'users'); // Adjust the path if necessary
+      try {
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setUserName(data.fname || 'User'); // Set `fname` or fallback to "User"
+        } else {
+          console.log('No data available');
+        }
+      } catch (error) {
+        console.error('Error fetching fname:', error);
+      }
+    };
+    fetchUserName();
+  }, []);  
 
   const tabData = [
     { icon: 'home-outline', label: 'Dashboard' },
@@ -574,12 +592,14 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   sectionContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 10,
     padding: 20,
     marginBottom: 20,
   },
-  sectionTitle: {
+  sectionTitle: { 
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',

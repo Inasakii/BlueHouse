@@ -1,5 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, Animated, Keyboard, TouchableWithoutFeedback, ScrollView, Modal} from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+  Animated,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
+  Modal,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +22,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase'; // Firebase auth import
 
 const { width, height } = Dimensions.get('window');
+
 const PasswordStrengthIndicator = ({ password }) => {
   const getStrength = (pass) => {
     let score = 0;
@@ -18,8 +32,10 @@ const PasswordStrengthIndicator = ({ password }) => {
     if (pass.match(/[^a-zA-Z\d]/)) score++;
     return score;
   };
+
   const strength = getStrength(password);
   const widthPercentage = (strength / 4) * 100;
+
   return (
     <View style={styles.strengthContainer}>
       <Animated.View
@@ -37,6 +53,7 @@ const PasswordStrengthIndicator = ({ password }) => {
     </View>
   );
 };
+
 const FeedbackModal = ({ visible, type, message, onClose }) => {
   return (
     <Modal
@@ -61,6 +78,7 @@ const FeedbackModal = ({ visible, type, message, onClose }) => {
     </Modal>
   );
 };
+
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [email, setEmail] = useState('');
@@ -222,6 +240,10 @@ export default function LoginScreen() {
               </View>
               <PasswordStrengthIndicator password={password} />
             </Animated.View>
+
+            <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity> 
 
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>Log In</Text>
