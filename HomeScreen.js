@@ -393,12 +393,12 @@ const SecurityControlsSection = () => {
 
 const AboutUsSection = () => {
   const teamMembers = [
-    { name: 'John Mark Capones', title: 'Project Manager', image: 'https://i.pravatar.cc/150?img=1' },
+    { name: 'John Mark Capones', title: 'Project Manager', image: 'https://scontent.fmnl17-2.fna.fbcdn.net/v/t39.30808-6/451995635_1848285492249670_1646044216773349979_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_ohc=ql-s-fVsXWQQ7kNvgFHwn-c&_nc_zt=23&_nc_ht=scontent.fmnl17-2.fna&_nc_gid=AzQyPIy-Lwccqrzek67RKqe&oh=00_AYBNBxwX66fMSVVcIo1pO9ZIHsm4oNUigCWdgQX9CS2rBg&oe=675FAC1F' },
     { name: 'Mark Rivinson Zafra', title: 'Back-end Administrator', image: '' },
     { name: 'Leigh Xienne Gegrimos', title: 'Assurance Specialist for Quality & Security', image: 'https://scontent.fmnl17-5.fna.fbcdn.net/v/t39.30808-6/447674332_122189216324010069_8274525488206710261_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=127cfc&_nc_ohc=D9cyEVbbLaUQ7kNvgGj8-n9&_nc_zt=23&_nc_ht=scontent.fmnl17-5.fna&_nc_gid=A4kQ4hsnvOS0fTlLFuszBlt&oh=00_AYAUJMXR5VKXmnccYbLB_cMPi021m_253Pq9ycPuYnk10w&oe=675FB895' },
-    { name: 'Joya Acel, J', title: 'Assurance Specialist for Quality & Security', image: 'https://i.pravatar.cc/150?img=3' },
+    { name: 'Joya Acel, J', title: 'Assurance Specialist for Quality & Security', image: 'https://scontent.fmnl17-7.fna.fbcdn.net/v/t39.30808-6/465674207_1874496856410441_3163323777184351382_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=nTq_i2Ws3eMQ7kNvgF2CWhz&_nc_zt=23&_nc_ht=scontent.fmnl17-7.fna&_nc_gid=A9rZc54kPj8okByQss6AYXj&oh=00_AYDW0dHGPFDsExdsHGwu7UhFW80GarVPbt76wg_rNvSCcg&oe=675FCEFF' },
     { name: 'Ken L. Palma', title: 'Back-end Developer & Front-end Developer', image: 'https://scontent.fmnl17-2.fna.fbcdn.net/v/t39.30808-6/462101976_3682236668755453_6560725037198512052_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=JuIAqbvKyeMQ7kNvgErNgOI&_nc_zt=23&_nc_ht=scontent.fmnl17-2.fna&_nc_gid=ANQIbts3yb09Rce0MAWAQqV&oh=00_AYBaUABCt50D8gMTPIp1xo1j58N_wick82Z1ybR_lvuw0w&oe=675FC39A' },
-    { name: 'John Anthony Salipot, J', title: 'Release Manager', image: '' },
+    { name: 'John Anthony Salipot, J', title: 'Release Manager', image: 'https://scontent.fmnl17-2.fna.fbcdn.net/v/t39.30808-1/454657701_1913452269105616_7616436904837231732_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=111&ccb=1-7&_nc_sid=0ecb9b&_nc_ohc=cMhxYkup_acQ7kNvgHb_IBZ&_nc_zt=24&_nc_ht=scontent.fmnl17-2.fna&_nc_gid=AQlDoZeR3N3aHkrrlHmZ10j&oh=00_AYBaSgOqK9agM95SciZOQ7Hzk6OeggorhpMtIibLMdnJjg&oe=675FCF5A' },
     { name: 'John Paul Sauco', title: 'User Insights Specialist', image: '' },
 
   ];
