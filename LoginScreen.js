@@ -223,10 +223,6 @@ export default function LoginScreen() {
               <PasswordStrengthIndicator password={password} />
             </Animated.View>
 
-            <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity> 
-
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.loginButtonText}>Log In</Text>
             </TouchableOpacity>

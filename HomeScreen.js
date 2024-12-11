@@ -70,9 +70,7 @@ const WeatherSection = () => {
 
 const SmartHomeLightingSection = () => {
   const [lights, setLights] = useState({
-    livingRoom: true,
-    bedroom: false,
-    kitchen: true,
+    lights: true,
   });
 
   const toggleLight = (room) => {
@@ -119,9 +117,9 @@ const SmartHomeLightingSection = () => {
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionTitle}>Smart Home Lighting</Text>
       <View style={styles.lightingContent}>
-        <LightItem room="Living Room" isOn={lights.livingRoom} />
-        <LightItem room="Bedroom" isOn={lights.bedroom} />
-        <LightItem room="Kitchen" isOn={lights.kitchen} />
+
+        <LightItem room="Open all lights" isOn={lights.lights} />
+
       </View>
     </View>
   );
@@ -178,13 +176,15 @@ const RoomControlsSection = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.sectionContainer}>
+      <View style={styles.roomControlsGrid}>
       <Text style={styles.sectionTitle}>Room Controls</Text>
       <RoomControl room="bedroom1" label="Bedroom 1" />
       <RoomControl room="bedroom2" label="Bedroom 2" />
       <RoomControl room="dining" label="Dining Room" />
       <RoomControl room="garage" label="Garage" />
       <RoomControl room="living_room" label="Living Room" />
+      </View>
     </View>
   );
 };
@@ -198,6 +198,22 @@ const SecurityControlsSection = () => {
     garage: new Animated.Value(0),
     frontDoor: new Animated.Value(0),
   }).current;
+
+  // Fetch garage door state from Firebase
+  useEffect(() => {
+    const garageDoorRef = ref(db, 'garage_door');
+    const unsubscribe = onValue(garageDoorRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data !== null) {
+        setSecurityStatus(prevState => ({
+          ...prevState,
+          garage: data === 1,  // If the value is 1, the door is open
+        }));
+      }
+    });
+  
+    return () => unsubscribe();
+  }, []);
 
   const panResponders = {
     garage: useRef(
@@ -252,11 +268,17 @@ const SecurityControlsSection = () => {
     ).current,
   };
 
-  const toggleLock = (item) => {
+    const toggleLock = (item) => {
+    if (item === 'garage') {
+      // Toggle the garage door state
+      const newState = !securityStatus[item]; // True -> open, false -> close
+      set(ref(db, 'garage_door'), newState ? 1 : 0);  // 1 for open, 0 for closed
+    }
     setSecurityStatus(prevStatus => ({
       ...prevStatus,
       [item]: !prevStatus[item]
     }));
+    // Haptic feedback for status change
     Haptics.notificationAsync(
       securityStatus[item] ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning
     );
@@ -267,6 +289,7 @@ const SecurityControlsSection = () => {
       }).start();
     }
   };
+
 
   const SecurityControl = ({ item, label, icon }) => {
     const swipeInterpolate = swipeAnim[item].interpolate({
@@ -303,12 +326,10 @@ const SecurityControlsSection = () => {
           </View>
         </View>
         {!securityStatus[item] && (
-          <Text style={styles.swipeInstructionText}>Swipe to lock</Text>
+          <Text style={styles.swipeInstructionText}>Swipe to Open</Text>
         )}
         {securityStatus[item] && (
-          <TouchableOpacity
-            style={styles.unlockButton}
-            onPress={() => toggleLock(item)}
+          <TouchableOpacity style={styles.unlockButton} onPress={() => toggleLock(item)}
           >
             <Text style={styles.unlockButtonText}>Tap to unlock</Text>
           </TouchableOpacity>
@@ -330,16 +351,14 @@ const SecurityControlsSection = () => {
 
 const AboutUsSection = () => {
   const teamMembers = [
-    { name: 'John Doe', title: 'CEO', image: 'https://i.pravatar.cc/150?img=1' },
-    { name: 'Ken L. Palma', title: 'Back-end Developer', image: '' },
-    { name: 'Mike Johnson', title: 'Lead Developer', image: 'https://i.pravatar.cc/150?img=3' },
-    { name: 'Emily Brown', title: 'UX Designer', image: 'https://i.pravatar.cc/150?img=4' },
-    { name: 'David Lee', title: 'Product Manager', image: 'https://i.pravatar.cc/150?img=5' },
-    { name: 'Sarah Wilson', title: 'Marketing Director', image: 'https://i.pravatar.cc/150?img=6' },
-    { name: 'Chris Taylor', title: 'Sales Manager', image: 'https://i.pravatar.cc/150?img=7' },
-    { name: 'Lisa Chen', title: 'Customer Support Lead', image: 'https://i.pravatar.cc/150?img=8' },
-    { name: 'Alex Rodriguez', title: 'QA Engineer', image: 'https://i.pravatar.cc/150?img=9' },
-    { name: 'Olivia Kim', title: 'Data Scientist', image: 'https://i.pravatar.cc/150?img=10' },
+    { name: 'John Mark Capones', title: 'Project Manager', image: 'https://i.pravatar.cc/150?img=1' },
+    { name: 'Mark Zafra', title: 'Back-end Administrator', image: '' },
+    { name: 'Leigh Xienne Gegrimos', title: 'Assurance Specialist for Quality & Security', image: 'https://i.pravatar.cc/150?img=3' },
+    { name: 'Joya Acel, J', title: 'Assurance Specialist for Quality & Security', image: 'https://i.pravatar.cc/150?img=3' },
+    { name: 'Ken L. Palma', title: 'Back-end Developer & Front-end Developer', image: '' },
+    { name: 'John Anthony Salipot, J', title: 'Release Manager', image: '' },
+    { name: 'John Paul Sauco', title: 'User Insights Specialist', image: '' },
+
   ];
 
   return (
@@ -457,10 +476,6 @@ const TabContent = ({ title }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
   },
   background: {
     flex: 1,
