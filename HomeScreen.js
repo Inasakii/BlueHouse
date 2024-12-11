@@ -1,22 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Animated,
-  TouchableOpacity,
-  ScrollView,
-  Switch,
-  PanResponder,
-  Image,
-} from 'react-native';
+import {View, Text, StyleSheet, Dimensions, Animated, TouchableOpacity, ScrollView, Switch, PanResponder, Image} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-
+// Import Firebase 
+import { auth, db } from './firebase'; 
+import { ref, get, onValue, set  } from 'firebase/database';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,36 +24,44 @@ const TabButton = ({ icon, label, isActive, onPress }) => {
 };
 
 const WeatherSection = () => {
-  const weatherData = {
-    temperature: 72,
-    condition: 'Partly Cloudy',
-    icon: 'partly-sunny-outline',
-    location: 'New York, NY',
-    humidity: '65%',
-    windSpeed: '8 mph',
-  };
-
-  const currentDate = new Date();
-  const formattedDate = currentDate.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const [weatherData, setWeatherData] = useState({
+    temperature: 0,
+    humidity: '0%',
+    icon: 'cloud-outline', // default icon
+    location: 'Temperature Detector',
   });
+
+  useEffect(() => {
+    const weatherRef = ref(db, 'sensor'); // path to your sensor data in Firebase
+    
+    // Listen to the real-time updates in Firebase
+    const unsubscribe = onValue(weatherRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Update the weather data with the values from Firebase
+        setWeatherData({
+          temperature: data.temperature,
+          humidity: data.humidity,
+          icon: 'partly-sunny-outline', // Use an appropriate icon based on data, you can expand this later
+          name: 'Temperature', // Static location or dynamic if needed
+        });
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener when component is unmounted
+  }, []); // Empty dependency array ensures this runs only once when component mounts
 
   return (
     <View style={styles.sectionContainer}>
       <View style={styles.weatherHeader}>
-        <Text style={styles.weatherLocation}>{weatherData.location}</Text>
-        <Text style={styles.weatherDate}>{formattedDate}</Text>
+        <Text style={styles.weatherName}>{weatherData.name}</Text>
       </View>
       <View style={styles.weatherContent}>
         <Ionicons name={weatherData.icon} size={80} color="#4a90e2" />
         <View style={styles.weatherInfo}>
           <Text style={styles.weatherTemp}>{weatherData.temperature}°F</Text>
-          <Text style={styles.weatherCondition}>{weatherData.condition}</Text>
+          <Text style={styles.weatherCondition}>Condition</Text> {/* You can add dynamic condition later */}
           <Text style={styles.weatherDetails}>Humidity: {weatherData.humidity}</Text>
-          <Text style={styles.weatherDetails}>Wind: {weatherData.windSpeed}</Text>
         </View>
       </View>
     </View>
@@ -83,6 +82,18 @@ const SmartHomeLightingSection = () => {
     }));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
+
+  const RoomControl = ({ room, label }) => (
+    <View style={styles.roomControl}>
+      <Text style={styles.roomLabel}>{label}</Text>
+      <Switch
+        value={roomLights[room]}
+        onValueChange={() => toggleLight(room)}
+        trackColor={{ false: '#e0e0e0', true: '#4a90e2' }}
+        thumbColor={roomLights[room] ? '#FFFFFF' : '#f4f3f4'}
+      />
+    </View>
+  );
 
   const LightItem = ({ room, isOn }) => (
     <TouchableOpacity 
@@ -118,18 +129,36 @@ const SmartHomeLightingSection = () => {
 
 const RoomControlsSection = () => {
   const [roomLights, setRoomLights] = useState({
-    firstFloorLiving: false,
-    firstFloorBedroom: false,
-    secondFloorLiving: false,
-    secondFloorBedroom: false,
+    bedroom1: false,
+    bedroom2: false,
+    dining: false,
+    garage: false,
+    living_room: false,
   });
 
-  const toggleLight = (room) => {
-    setRoomLights(prevLights => ({
-      ...prevLights,
-      [room]: !prevLights[room]
-    }));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // Fetch light states from Firebase
+  useEffect(() => {
+    const lightsRef = ref(db, 'lights');
+    const unsubscribe = onValue(lightsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setRoomLights({
+          bedroom1: data.bedroom1 === 1,
+          bedroom2: data.bedroom2 === 1,
+          dining: data.dining === 1,
+          garage: data.garage === 1,
+          living_room: data.living_room === 1,
+        });
+      }
+    });
+
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, []);
+
+   // Update light state in Firebase
+   const toggleLight = (room) => {
+    const newValue = !roomLights[room] ? 1 : 0;
+    set(ref(db, `lights/${room}`), newValue); // Update light state in Firebase
   };
 
   const RoomControl = ({ room, label, icon }) => (
@@ -149,18 +178,16 @@ const RoomControlsSection = () => {
   );
 
   return (
-    <View style={styles.sectionContainer}>
+    <View style={styles.container}>
       <Text style={styles.sectionTitle}>Room Controls</Text>
-      <View style={styles.roomControlsGrid}>
-        <RoomControl room="firstFloorLiving" label="1st Floor Living" icon="home-outline" />
-        <RoomControl room="firstFloorBedroom" label="1st Floor Bedroom" icon="bed-outline" />
-        <RoomControl room="secondFloorLiving" label="2nd Floor Living" icon="tv-outline" />
-        <RoomControl room="secondFloorBedroom" label="2nd Floor Bedroom" icon="moon-outline" />
-      </View>
+      <RoomControl room="bedroom1" label="Bedroom 1" />
+      <RoomControl room="bedroom2" label="Bedroom 2" />
+      <RoomControl room="dining" label="Dining Room" />
+      <RoomControl room="garage" label="Garage" />
+      <RoomControl room="living_room" label="Living Room" />
     </View>
   );
 };
-
 const SecurityControlsSection = () => {
   const [securityStatus, setSecurityStatus] = useState({
     garage: false,
@@ -304,7 +331,7 @@ const SecurityControlsSection = () => {
 const AboutUsSection = () => {
   const teamMembers = [
     { name: 'John Doe', title: 'CEO', image: 'https://i.pravatar.cc/150?img=1' },
-    { name: 'Jane Smith', title: 'CTO', image: 'https://i.pravatar.cc/150?img=2' },
+    { name: 'Ken L. Palma', title: 'Back-end Developer', image: '' },
     { name: 'Mike Johnson', title: 'Lead Developer', image: 'https://i.pravatar.cc/150?img=3' },
     { name: 'Emily Brown', title: 'UX Designer', image: 'https://i.pravatar.cc/150?img=4' },
     { name: 'David Lee', title: 'Product Manager', image: 'https://i.pravatar.cc/150?img=5' },
@@ -430,6 +457,10 @@ const TabContent = ({ title }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   background: {
     flex: 1,
@@ -500,7 +531,7 @@ const styles = StyleSheet.create({
   weatherHeader: {
     marginBottom: 15,
   },
-  weatherLocation: {
+  weatherName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
@@ -557,6 +588,12 @@ const styles = StyleSheet.create({
   lightingStatus: {
     fontSize: 12,
     marginTop: 5,
+  },
+  roomControl: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   roomControlsGrid: {
     flexDirection: 'row',

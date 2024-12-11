@@ -1,18 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Dimensions,
-  Animated,
-  Keyboard,
-  TouchableWithoutFeedback,
-  ScrollView,
-  Modal,
-} from 'react-native';
+import {View,Text,TextInput,TouchableOpacity, Image, StyleSheet, Dimensions, Animated, Keyboard, TouchableWithoutFeedback, ScrollView, Modal} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -266,16 +253,20 @@ export default function SignUpScreen() {
                 <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Password"
+                  placeholder="New Password"
                   placeholderTextColor="#A0A0A0"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={setPassword} // Dynamically updates password state
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                   <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#FFFFFF" />
                 </TouchableOpacity>
               </View>
+
+              {/* Password Strength Indicator */}
+              <PasswordStrengthIndicator password={password} />
+
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={24} color="#FFFFFF" style={styles.inputIcon} />
                 <TextInput
