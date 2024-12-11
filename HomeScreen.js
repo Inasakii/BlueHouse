@@ -23,6 +23,17 @@ const TabButton = ({ icon, label, isActive, onPress }) => {
   );
 };
 
+const sendDoorbellNotification = () => {
+  // Assuming you've already set up Firebase and PushNotification
+  PushNotification.localNotification({
+    title: 'Doorbell Alert',
+    message: 'Someone is at the door!',
+  });
+
+  // Update the doorbell state in Firebase
+  set(ref(db, 'doorbell'), true); // Update the doorbell status to true when pressed
+};
+
 const WeatherSection = () => {
   const [weatherData, setWeatherData] = useState({
     temperature: 0,
@@ -459,11 +470,41 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [userName, setUserName] = useState(''); // Default empty state for userName
   const navigation = useNavigation();
-  const [showNotification, setShowNotification] = useState(true);
+  const [detected, setDetected] = useState(true); // Detect status from Firebase
+  const [showNotification, setShowNotification] = useState(false); // Show notification flag
+
+  // Fetch 'detected' state from Firebase Realtime Database
+  useEffect(() => {
+    const detectedRef = ref(db, 'ultrasonic/detected'); // Path to ultrasonic/detected in Firebase
+    const unsubscribe = onValue(detectedRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data !== null) {
+        setDetected(data); // Set the detected state based on Firebase value
+      }
+    });
+
+    return () => unsubscribe();
+  }, []); // Only run once when component mounts
+
+  // Trigger notification when detected state changes
+  useEffect(() => {
+    if (detected) {
+      setShowNotification(true);  // Show notification when detected is true
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); // Haptic feedback
+
+      // Optionally hide the notification after 3 seconds
+      setTimeout(() => {
+        setShowNotification(true);
+      }, 3000); // Hide after 3 seconds
+    } else {
+      setShowNotification(true);  // Hide notification when detected is false
+    }
+  }, [detected]); // Effect runs every time detected changes
+
   const notificationHeight = useRef(new Animated.Value(0)).current;
   const notificationOpacity = useRef(new Animated.Value(1)).current;
   const [isMicActive, setIsMicActive] = useState(false);
-
+  
   // Fetch `fname` from Realtime Database
   useEffect(() => {
     const fetchUserName = async () => {
@@ -547,7 +588,7 @@ export default function HomeScreen() {
         <Animated.View style={[styles.header, { marginTop: notificationHeight }]}>
           {showNotification && (
             <Animated.View style={[styles.notification, { height: notificationHeight, opacity: notificationOpacity }]}>
-              <Text style={styles.notificationText}>New notification!</Text>
+              <Text style={styles.notificationText}>Something is detected thru your Door!</Text>
               <TouchableOpacity onPress={hideNotification} style={styles.notificationCloseButton}>
                 <Ionicons name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
@@ -746,7 +787,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roomControlBoxOn: {
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#0077b6',
   },
   roomControlLabel: {
     color: '#FFFFFF',
@@ -873,7 +914,8 @@ const styles = StyleSheet.create({
     top: -60,
     left: 0,
     right: 0,
-    backgroundColor: '#4a90e2',
+    width: 500,
+    backgroundColor: 'red',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -883,6 +925,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 600, 
+    marginLeft: 250,
+    marginRight: -50,
+    width: 300,
   },
   notificationCloseButton: {
     padding: 5,
