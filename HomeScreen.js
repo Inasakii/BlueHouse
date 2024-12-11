@@ -32,21 +32,20 @@ const WeatherSection = () => {
   });
 
   useEffect(() => {
-    const weatherRef = ref(db, 'sensor'); // path to your sensor data in Firebase
-    
-    // Listen to the real-time updates in Firebase
-    const unsubscribe = onValue(weatherRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Update the weather data with the values from Firebase
-        setWeatherData({
-          temperature: data.temperature,
-          humidity: data.humidity,
-          icon: 'partly-sunny-outline', // Use an appropriate icon based on data, you can expand this later
-          name: 'Temperature', // Static location or dynamic if needed
-        });
-      }
-    });
+  const weatherRef = ref(db, 'sensor'); // path to your sensor data in Firebase
+  // Listen to the real-time updates in Firebase
+  const unsubscribe = onValue(weatherRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      // Update the weather data with the values from Firebase
+      setWeatherData({
+        temperature: data.temperature,
+        humidity: data.humidity,
+        icon: 'partly-sunny-outline', // Use an appropriate icon based on data, you can expand this later
+        name: 'Temperature', // Static location or dynamic if needed
+      });
+    }
+  });
 
     return () => unsubscribe(); // Cleanup listener when component is unmounted
   }, []); // Empty dependency array ensures this runs only once when component mounts
@@ -69,46 +68,70 @@ const WeatherSection = () => {
 };
 
 const SmartHomeLightingSection = () => {
-  const [lights, setLights] = useState({
-    lights: true,
+  const [roomLights, setRoomLights] = useState({
+    bedroom1: false,
+    bedroom2: false,
+    dining: false,
+    garage: false,
+    living_room: false,
   });
 
-  const toggleLight = (room) => {
-    setLights(prevLights => ({
-      ...prevLights,
-      [room]: !prevLights[room]
-    }));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const [allLightsOn, setAllLightsOn] = useState(false);
+
+  // Update light states in Firebase
+  const updateLightState = (room, state) => {
+    set(ref(db, `lights/${room}`), state ? 1 : 0); // Update individual room light state in Firebase
   };
 
-  const RoomControl = ({ room, label }) => (
-    <View style={styles.roomControl}>
-      <Text style={styles.roomLabel}>{label}</Text>
-      <Switch
-        value={roomLights[room]}
-        onValueChange={() => toggleLight(room)}
-        trackColor={{ false: '#e0e0e0', true: '#4a90e2' }}
-        thumbColor={roomLights[room] ? '#FFFFFF' : '#f4f3f4'}
-      />
-    </View>
-  );
+  // Toggle a specific room's light
+  const toggleRoomLight = (room) => {
+    const newState = !roomLights[room];
 
-  const LightItem = ({ room, isOn }) => (
-    <TouchableOpacity 
-      style={styles.lightingItem} 
-      onPress={() => toggleLight(room)}
+    // Update local state and Firebase
+    setRoomLights((prevLights) => {
+      const updatedLights = { ...prevLights, [room]: newState };
+      const allOn = Object.values(updatedLights).every((value) => value); // Check if all lights are on
+      setAllLightsOn(allOn); // Update "Open all lights" state
+      return updatedLights;
+    });
+
+    updateLightState(room, newState);
+  };
+
+  // Toggle all lights
+  const toggleAllLights = () => {
+    const newState = !allLightsOn;
+
+    // Update local state and Firebase
+    setRoomLights((prevLights) => {
+      const updatedLights = Object.keys(prevLights).reduce((acc, room) => {
+        acc[room] = newState;
+        updateLightState(room, newState); // Update each light in Firebase
+        return acc;
+      }, {});
+      return updatedLights;
+    });
+
+    setAllLightsOn(newState);
+  };
+
+  // LightItem for individual lights
+  const LightItem = ({ room, label, isOn }) => (
+    <TouchableOpacity
+      style={styles.lightingItem}
+      onPress={() => toggleRoomLight(room)}
       activeOpacity={0.7}
     >
       <View style={[styles.lightBulbContainer, isOn && styles.lightBulbContainerOn]}>
-        <Ionicons 
-          name={isOn ? "bulb" : "bulb-outline"} 
-          size={40} 
-          color={isOn ? '#FFFFFF' : '#A0A0A0'} 
+        <Ionicons
+          name={isOn ? "bulb" : "bulb-outline"}
+          size={40}
+          color={isOn ? "#FFFFFF" : "#A0A0A0"}
         />
       </View>
-      <Text style={styles.lightingText}>{room}</Text>
-      <Text style={[styles.lightingStatus, { color: isOn ? '#4a90e2' : '#A0A0A0' }]}>
-        {isOn ? 'On' : 'Off'}
+      <Text style={styles.lightingText}>{label}</Text>
+      <Text style={[styles.lightingStatus, { color: isOn ? "#4a90e2" : "#A0A0A0" }]}>
+        {isOn ? "On" : "Off"}
       </Text>
     </TouchableOpacity>
   );
@@ -117,13 +140,32 @@ const SmartHomeLightingSection = () => {
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionTitle}>Smart Home Lighting</Text>
       <View style={styles.lightingContent}>
-
-        <LightItem room="Open all lights" isOn={lights.lights} />
-
+        {/* Control for "Open all lights" */}
+        <TouchableOpacity
+          style={styles.lightingItem}
+          onPress={toggleAllLights}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.lightBulbContainer, allLightsOn && styles.lightBulbContainerOn]}>
+            <Ionicons
+              name={allLightsOn ? "bulb" : "bulb-outline"}
+              size={40}
+              color={allLightsOn ? "#FFFFFF" : "#A0A0A0"}
+            />
+          </View>
+          <Text style={styles.lightingText}>Open all lights</Text>
+          <Text
+            style={[styles.lightingStatus, { color: allLightsOn ? "#4a90e2" : "#A0A0A0" }]}
+          >
+            {allLightsOn ? "On" : "Off"}
+          </Text>
+        </TouchableOpacity>
+       
       </View>
     </View>
   );
 };
+
 
 const RoomControlsSection = () => {
   const [roomLights, setRoomLights] = useState({
