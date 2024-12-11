@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
+import PushNotification from 'react-native-push-notification';
 // Import Firebase 
 import { auth, db } from './firebase'; 
 import { ref, get, onValue, set  } from 'firebase/database';
@@ -444,14 +445,6 @@ const TabContent = ({ title }) => {
       case 'About Us':
         return <AboutUsSection />;
 
-        
-      case 'Profile':
-        return (
-          <View style={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Profile</Text>
-            <Text style={styles.placeholderText}>Manage your account settings.</Text>
-          </View>
-        );
       default:
         return null;
     }
@@ -471,6 +464,33 @@ export default function HomeScreen() {
   const [showNotification, setShowNotification] = useState(true);
   const notificationHeight = useRef(new Animated.Value(0)).current;
   const notificationOpacity = useRef(new Animated.Value(1)).current;
+
+  // Firebase Realtime Database Listener for Doorbell
+  useEffect(() => {
+    const doorbellRef = ref(db, '/doorbell');
+
+    const doorbellListener = onValue(doorbellRef, (snapshot) => {
+      const doorbellStatus = snapshot.val();
+      if (doorbellStatus) {
+        // Trigger local notification
+        PushNotification.localNotification({
+          title: 'Doorbell Alert',
+          message: 'Someone is at the door!',
+          playSound: true,
+          soundName: 'default',
+          importance: 'high',
+          vibrate: true,
+        });
+
+        // Reset the doorbell status in Firebase (optional)
+        set(doorbellRef, false);
+      }
+    });
+
+    return () => {
+      doorbellListener();
+    };
+  }, []);
 
   // Fetch `fname` from Realtime Database
   useEffect(() => {
@@ -532,7 +552,6 @@ export default function HomeScreen() {
   const tabData = [
     { icon: 'home-outline', label: 'Dashboard' },
     { icon: 'people-outline', label: 'About Us' },
-    { icon: 'person-outline', label: 'Profile' },
   ];
 
   const handleTabPress = (tab) => {
@@ -866,7 +885,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 80,
   },
   notificationText: {
     color: '#FFFFFF',

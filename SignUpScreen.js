@@ -7,9 +7,10 @@ import * as Haptics from 'expo-haptics';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth'; // Firebase signup method
 
-import { auth } from './firebase'; 
+import { auth, db } from './firebase'; 
 import { ref, set } from 'firebase/database'; // Realtime Database functions
-import { db } from './firebase'; // Import the corrected Realtime Database instance
+import { doc, setDoc } from 'firebase/firestore'; // Firestore functions
+import { dbf } from './firebase'; // Firestore instance
 
 const { width, height } = Dimensions.get('window');
 
@@ -155,8 +156,8 @@ export default function SignUpScreen() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
   
-      // Save user details to Firebase Realtime Database
-      await set(ref(db, `users/${user.uid}`), {
+      // Save user details to Firestore
+      await setDoc(doc(db, 'users', user.uid), {
         fname: fname,
         lname: lname,
         email: user.email,
@@ -171,12 +172,6 @@ export default function SignUpScreen() {
     }
   };
   
-  const showModal = (type, message) => {
-    setModalType(type);
-    setModalMessage(message);
-    setModalVisible(true);
-  };
-
   const shakeInput = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     Animated.sequence([
@@ -286,7 +281,6 @@ export default function SignUpScreen() {
             <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
               <Text style={styles.signUpButtonText}>Sign Up</Text>
             </TouchableOpacity>
-
             <View style={styles.termsContainer}>
               <Text style={styles.termsText}>
                 By signing up, you accept our{' '}
