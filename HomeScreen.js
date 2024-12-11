@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import PushNotification from 'react-native-push-notification';
 // Import Firebase 
 import { auth, db } from './firebase'; 
 import { ref, get, onValue, set  } from 'firebase/database';
@@ -401,7 +400,6 @@ const AboutUsSection = () => {
     { name: 'Ken L. Palma', title: 'Back-end Developer & Front-end Developer', image: 'https://scontent.fmnl17-2.fna.fbcdn.net/v/t39.30808-6/462101976_3682236668755453_6560725037198512052_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=JuIAqbvKyeMQ7kNvgErNgOI&_nc_zt=23&_nc_ht=scontent.fmnl17-2.fna&_nc_gid=ANQIbts3yb09Rce0MAWAQqV&oh=00_AYBaUABCt50D8gMTPIp1xo1j58N_wick82Z1ybR_lvuw0w&oe=675FC39A' },
     { name: 'John Anthony Salipot, J', title: 'Release Manager', image: 'https://scontent.fmnl17-2.fna.fbcdn.net/v/t39.30808-1/454657701_1913452269105616_7616436904837231732_n.jpg?stp=dst-jpg_s200x200_tt6&_nc_cat=111&ccb=1-7&_nc_sid=0ecb9b&_nc_ohc=cMhxYkup_acQ7kNvgHb_IBZ&_nc_zt=24&_nc_ht=scontent.fmnl17-2.fna&_nc_gid=AQlDoZeR3N3aHkrrlHmZ10j&oh=00_AYBaSgOqK9agM95SciZOQ7Hzk6OeggorhpMtIibLMdnJjg&oe=675FCF5A' },
     { name: 'John Paul Sauco', title: 'User Insights Specialist', image: '' },
-
   ];
 
   return (
@@ -464,33 +462,7 @@ export default function HomeScreen() {
   const [showNotification, setShowNotification] = useState(true);
   const notificationHeight = useRef(new Animated.Value(0)).current;
   const notificationOpacity = useRef(new Animated.Value(1)).current;
-
-  // Firebase Realtime Database Listener for Doorbell
-  useEffect(() => {
-    const doorbellRef = ref(db, '/doorbell');
-
-    const doorbellListener = onValue(doorbellRef, (snapshot) => {
-      const doorbellStatus = snapshot.val();
-      if (doorbellStatus) {
-        // Trigger local notification
-        PushNotification.localNotification({
-          title: 'Doorbell Alert',
-          message: 'Someone is at the door!',
-          playSound: true,
-          soundName: 'default',
-          importance: 'high',
-          vibrate: true,
-        });
-
-        // Reset the doorbell status in Firebase (optional)
-        set(doorbellRef, false);
-      }
-    });
-
-    return () => {
-      doorbellListener();
-    };
-  }, []);
+  const [isMicActive, setIsMicActive] = useState(false);
 
   // Fetch `fname` from Realtime Database
   useEffect(() => {
@@ -559,6 +531,13 @@ export default function HomeScreen() {
     setActiveTab(tab);
   };
 
+  const handleMicPress = () => {
+    setIsMicActive(!isMicActive);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Here you would typically start or stop voice recognition
+    // For now, we'll just toggle the state
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -596,6 +575,19 @@ export default function HomeScreen() {
             />
           ))}
         </View>
+        <TouchableOpacity
+          style={styles.micButton}
+          onPress={handleMicPress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.micIconContainer}>
+            <Ionicons
+              name={isMicActive ? "mic" : "mic-outline"}
+              size={28}
+              color="#FFFFFF"
+            />
+          </View>
+        </TouchableOpacity>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -894,6 +886,33 @@ const styles = StyleSheet.create({
   },
   notificationCloseButton: {
     padding: 5,
+  },
+  micButton: {
+    position: 'absolute',
+    bottom: 90, // Adjust this value to position it above the tab bar
+    alignSelf: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#4a90e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  micIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

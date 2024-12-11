@@ -187,7 +187,6 @@ export default function LoginScreen() {
     Haptics.selectionAsync();
     navigation.navigate('SignUp');
   };
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <SafeAreaView style={styles.container}>
